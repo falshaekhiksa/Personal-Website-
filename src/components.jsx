@@ -14,6 +14,8 @@ export function Navbar() {
           <li><a href="#skills">{t.nav.skills}</a></li>
           <li><a href="#experience">{t.nav.experience}</a></li>
           <li><a href="#contact">{t.nav.contact}</a></li>
+          <li><a href="#/freelance">{lang === 'ar' ? 'الأعمال والحلول' : 'Freelance'}</a></li>
+          <li><a href="#/family">{lang === 'ar' ? 'صلة | العائلة' : 'Family'}</a></li>
         </ul>
         <button className="lang-btn" onClick={toggleLang}>{t.switchTo}</button>
       </div>
