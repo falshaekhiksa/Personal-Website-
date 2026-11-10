@@ -70,7 +70,12 @@ export default function FreelancePage() {
           <p className="tagline">
             خدمات مدفوعة موثّقة بموجب وثائق وأنشطة العمل الحر، نحوّل التعقيد إلى خطوات واضحة، والخطط إلى نتائج.
           </p>
-          <a href="#quote" className="btn primary">اطلب عرض سعر</a>
+          <button
+            className="btn primary"
+            onClick={() => document.getElementById('quote').scrollIntoView({ behavior: 'smooth' })}
+          >
+            اطلب عرض سعر
+          </button>
         </div>
       </header>
 
