@@ -3,19 +3,28 @@ import { useLang } from './i18n.jsx';
 
 export function Navbar() {
   const { t, toggleLang, lang } = useLang();
+  const [open, setOpen] = useState(false);
   return (
     <nav className="navbar">
       <div className="container nav-inner">
         <a href="#home" className="logo">
           {lang === 'ar' ? 'موقعي' : 'MySite'}
         </a>
-        <ul className="nav-links">
-          <li><a href="#about">{t.nav.about}</a></li>
-          <li><a href="#skills">{t.nav.skills}</a></li>
-          <li><a href="#experience">{t.nav.experience}</a></li>
-          <li><a href="#contact">{t.nav.contact}</a></li>
+        <ul className={`nav-links${open ? ' open' : ''}`}>
+          <li><a href="#about" onClick={() => setOpen(false)}>{t.nav.about}</a></li>
+          <li><a href="#skills" onClick={() => setOpen(false)}>{t.nav.skills}</a></li>
+          <li><a href="#experience" onClick={() => setOpen(false)}>{t.nav.experience}</a></li>
+          <li><a href="#contact" onClick={() => setOpen(false)}>{t.nav.contact}</a></li>
         </ul>
         <button className="lang-btn" onClick={toggleLang}>{t.switchTo}</button>
+        <button
+          className={`menu-btn${open ? ' open' : ''}`}
+          aria-label={lang === 'ar' ? 'القائمة' : 'Menu'}
+          aria-expanded={open}
+          onClick={() => setOpen((o) => !o)}
+        >
+          <span /><span /><span />
+        </button>
       </div>
     </nav>
   );
@@ -102,7 +111,7 @@ export function Experience() {
 }
 
 export function Contact() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   // TODO: replace with your Formspree form ID (create one at https://formspree.io)
   const FORMSPREE_ID = 'myFormId';
   const [status, setStatus] = useState('idle');
@@ -146,22 +155,24 @@ export function Contact() {
           <input type="email" placeholder={t.contact.email} required />
           <textarea placeholder={t.contact.message} rows="5" required />
           <button type="submit" className="btn primary" disabled={status === 'sending'}>
-            {status === 'sending' ? msg[document.documentElement.lang === 'ar' ? 'ar' : 'en'].sending : t.contact.send}
+            {status === 'sending' ? msg[lang].sending : t.contact.send}
           </button>
-          {status === 'success' && <p className="form-status success">{msg[document.documentElement.lang === 'ar' ? 'ar' : 'en'].success}</p>}
-          {status === 'error' && <p className="form-status error">{msg[document.documentElement.lang === 'ar' ? 'ar' : 'en'].error}</p>}
+          {status === 'success' && <p className="form-status success">{msg[lang].success}</p>}
+          {status === 'error' && <p className="form-status error">{msg[lang].error}</p>}
         </form>
       </div>
     </section>
   );
 }
 
+const YEAR = new Date().getFullYear();
+
 export function Footer() {
   const { t } = useLang();
   return (
     <footer className="footer">
       <div className="container">
-        <p>© {new Date().getFullYear()} — {t.footer}</p>
+        <p>© {YEAR} — {t.footer}</p>
       </div>
     </footer>
   );
