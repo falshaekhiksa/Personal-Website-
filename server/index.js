@@ -2,8 +2,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import express from 'express';
-import { read, insert, update, find } from './db.js';
-import { verifyPassword, issueToken, authenticate, ensureSeedUser } from './auth.js';
+import { read, insert, update, find, filter } from './db.js';
+import { verifyPassword, issueToken, authenticate, requireRole, ensureSeedUser, hashPassword } from './auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -27,8 +27,30 @@ app.post('/api/quotes', (req, res) => {
     deadline: deadline || '',
     details: details || '',
     status: 'جديد',
+    createdBy: req.user ? req.user.username : null,
   });
   res.status(201).json({ ok: true, id: quote.id });
+});
+
+app.post('/api/auth/register', (req, res) => {
+  const { username, password, fullName, email } = req.body || {};
+  if (!username || !password || !fullName) {
+    return res.status(400).json({ error: 'الاسم واسم المستخدم وكلمة المرور مطلوبة' });
+  }
+  if (find('users', (u) => u.username === username)) {
+    return res.status(409).json({ error: 'اسم المستخدم مستخدم مسبقاً' });
+  }
+  const { salt, hash } = hashPassword(password);
+  const user = insert('users', {
+    username,
+    salt,
+    hash,
+    role: 'client',
+    fullName,
+    email: email || '',
+  });
+  res.status(201).json({ ok: true });
+  user.hash = undefined;
 });
 
 app.post('/api/auth/login', (req, res) => {
@@ -125,6 +147,99 @@ app.get('/api/alerts', authenticate, (req, res) => {
     }
   }
   res.json(alerts);
+});
+
+function notify(userId, message) {
+  insert('notifications', { userId, message, read: false });
+}
+
+app.get('/api/my/quotes', authenticate, requireRole('client'), (req, res) => {
+  const user = find('users', (u) => u.id === req.user.sub) || {};
+  res.json(
+    filter('quotes', (q) => q.createdBy === user.username || (user.email && q.email === user.email))
+  );
+});
+
+app.get('/api/my/invoices', authenticate, requireRole('client'), (req, res) => {
+  res.json(filter('invoices', (i) => i.clientId === req.user.sub));
+});
+
+app.post('/api/invoices/:id/pay', authenticate, requireRole('client'), (req, res) => {
+  const invoice = find('invoices', (i) => i.id === req.params.id && i.clientId === req.user.sub);
+  if (!invoice) return res.status(404).json({ error: 'الفاتورة غير موجودة' });
+  if (invoice.status === 'مدفوعة') return res.status(400).json({ error: 'الفاتورة مدفوعة مسبقاً' });
+  const method = req.body && req.body.method;
+  if (!['مدى', 'بطاقة ائتمانية', 'تحويل بنكي'].includes(method)) {
+    return res.status(400).json({ error: 'طريقة دفع غير صالحة' });
+  }
+  const paid = update('invoices', invoice.id, { status: 'مدفوعة', paidAt: new Date().toISOString(), method });
+  insert('payments', { invoiceId: invoice.id, amount: invoice.amount, method, clientId: req.user.sub });
+  res.json(paid);
+});
+
+app.get('/api/my/notifications', authenticate, requireRole('client'), (req, res) => {
+  res.json(filter('notifications', (n) => n.userId === req.user.sub));
+});
+
+app.get('/api/admin/quotes', authenticate, requireRole('admin'), (req, res) => {
+  res.json(read('quotes'));
+});
+
+const QUOTE_STATUSES = ['جديد', 'قيد الدراسة', 'عرض مرسل', 'معتمد', 'مكتمل', 'مرفوض'];
+
+app.put('/api/admin/quotes/:id', authenticate, requireRole('admin'), (req, res) => {
+  const status = req.body && req.body.status;
+  if (!QUOTE_STATUSES.includes(status)) return res.status(400).json({ error: 'حالة غير صالحة' });
+  const quote = update('quotes', req.params.id, { status });
+  if (!quote) return res.status(404).json({ error: 'الطلب غير موجود' });
+  const client =
+    find('users', (u) => u.username === quote.createdBy) ||
+    find('users', (u) => quote.email && u.email === quote.email);
+  if (client) {
+    notify(client.id, `تحديث حالة طلب «${quote.service}»: ${status}`);
+  }
+  res.json(quote);
+});
+
+app.post('/api/admin/invoices', authenticate, requireRole('admin'), (req, res) => {
+  const { quoteId, amount, dueDate } = req.body || {};
+  const quote = find('quotes', (q) => q.id === quoteId);
+  if (!quote) return res.status(404).json({ error: 'طلب عرض السعر غير موجود' });
+  const value = Number(amount);
+  if (!value || value <= 0) return res.status(400).json({ error: 'مبلغ غير صالح' });
+  const client =
+    find('users', (u) => quote.createdBy && u.username === quote.createdBy) ||
+    find('users', (u) => quote.email && u.email === quote.email);
+  if (!client) return res.status(400).json({ error: 'لا يوجد حساب عميل مرتبط بالطلب (يجوز للعميل التسجيل بنفس البريد)' });
+  const invoice = insert('invoices', {
+    clientId: client.id,
+    clientName: client.fullName,
+    quoteId,
+    service: quote.service,
+    amount: value,
+    dueDate: dueDate || null,
+    status: 'غير مدفوعة',
+  });
+  notify(client.id, `تم إصدار فاتورة بمبلغ ${value} ريال لخدمة «${quote.service}»`);
+  res.status(201).json(invoice);
+});
+
+app.get('/api/admin/invoices', authenticate, requireRole('admin'), (req, res) => {
+  res.json(read('invoices'));
+});
+
+app.get('/api/admin/stats', authenticate, requireRole('admin'), (req, res) => {
+  const quotes = read('quotes');
+  const invoices = read('invoices');
+  const payments = read('payments');
+  res.json({
+    quotesTotal: quotes.length,
+    quotesByStatus: QUOTE_STATUSES.reduce((acc, s) => ({ ...acc, [s]: quotes.filter((q) => q.status === s).length }), {}),
+    invoicesTotal: invoices.length,
+    invoicesUnpaid: invoices.filter((i) => i.status !== 'مدفوعة').length,
+    revenue: payments.reduce((sum, p) => sum + p.amount, 0),
+    clients: filter('users', (u) => u.role === 'client').length,
+  });
 });
 
 const distDir = path.join(__dirname, '..', 'dist');

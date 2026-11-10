@@ -10,6 +10,9 @@ const FILES = {
   documents: 'documents.json',
   appointments: 'appointments.json',
   quotes: 'quotes.json',
+  invoices: 'invoices.json',
+  payments: 'payments.json',
+  notifications: 'notifications.json',
 };
 
 function ensureDir() {
@@ -52,4 +55,8 @@ export function update(name, id, patch) {
 
 export function find(name, predicate) {
   return read(name).find(predicate) || null;
+}
+
+export function filter(name, predicate) {
+  return read(name).filter(predicate);
 }

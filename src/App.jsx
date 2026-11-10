@@ -15,6 +15,8 @@ import {
 } from './components.jsx';
 import FreelancePage from './freelance.jsx';
 import FamilyPage from './family.jsx';
+import ClientPage from './client.jsx';
+import AdminPage from './admin.jsx';
 
 function useHashRoute() {
   const [route, setRoute] = useState(window.location.hash);
@@ -49,9 +51,13 @@ export default function App() {
     ? 'freelance'
     : route.startsWith('#/family')
       ? 'family'
-      : LEGAL_PAGES.some((p) => route === `#/${p}`)
-        ? route.slice(2)
-        : 'home';
+      : route.startsWith('#/client')
+        ? 'client'
+        : route.startsWith('#/admin')
+          ? 'admin'
+          : LEGAL_PAGES.some((p) => route === `#/${p}`)
+            ? route.slice(2)
+            : 'home';
 
   return (
     <LangProvider>
@@ -60,6 +66,10 @@ export default function App() {
         <FreelancePage />
       ) : page === 'family' ? (
         <FamilyPage />
+      ) : page === 'client' ? (
+        <ClientPage />
+      ) : page === 'admin' ? (
+        <AdminPage />
       ) : page === 'home' ? (
         <MainSite />
       ) : (

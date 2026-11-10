@@ -78,6 +78,42 @@ const server = app.listen(0, async () => {
     assert.strictEqual(r.body.length > 0, true);
     passed++;
 
+    r = await call('GET', '/api/my/quotes', null, token);
+    assert.strictEqual(r.status, 403);
+    passed++;
+
+    const clientName = 'client_' + Date.now();
+    r = await call('POST', '/api/auth/register', {
+      username: clientName,
+      password: 'Client@1234',
+      fullName: 'عميل تجريبي',
+      email: 'client@example.com',
+    });
+    assert.strictEqual(r.status, 201);
+    passed++;
+
+    const clientLogin = await call('POST', '/api/auth/login', {
+      username: clientName,
+      password: 'Client@1234',
+    });
+    assert.strictEqual(clientLogin.status, 200);
+    assert.strictEqual(clientLogin.body.user.role, 'client');
+    const clientToken = clientLogin.body.token;
+    passed++;
+
+    r = await call('GET', '/api/my/quotes', null, clientToken);
+    assert.strictEqual(r.status, 200);
+    passed++;
+
+    r = await call('GET', '/api/admin/stats', null, clientToken);
+    assert.strictEqual(r.status, 403);
+    passed++;
+
+    r = await call('GET', '/api/admin/stats', null, token);
+    assert.strictEqual(r.status, 200);
+    assert.strictEqual(r.body.quotesTotal > 0, true);
+    passed++;
+
     console.log(`OK: ${passed} اختبارات ناجحة`);
     server.close();
     process.exit(0);

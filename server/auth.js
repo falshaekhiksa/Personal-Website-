@@ -33,6 +33,15 @@ export function authenticate(req, res, next) {
   }
 }
 
+export function requireRole(role) {
+  return (req, res, next) => {
+    if (!req.user || req.user.role !== role) {
+      return res.status(403).json({ error: 'لا تملك صلاحية الوصول' });
+    }
+    next();
+  };
+}
+
 export function ensureSeedUser() {
   const username = process.env.ADMIN_USERNAME || 'falshaekhi';
   const password = process.env.ADMIN_PASSWORD || 'Family@1234';

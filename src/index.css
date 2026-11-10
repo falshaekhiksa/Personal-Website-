@@ -182,3 +182,11 @@ body {
 @media (max-width: 640px) {
   .nav-actions .nav-cta { display: none; }
 }
+
+/* Client + admin panels */
+.tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+.tab { background: transparent; border: 1px solid rgba(20,42,67,0.2); border-radius: 999px; padding: 0.35rem 1rem; cursor: pointer; font: inherit; }
+.tab.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+.status-pill { display: inline-block; background: rgba(184,149,85,0.15); color: var(--navy); border-radius: 999px; padding: 0.15rem 0.7rem; font-size: 0.8rem; }
+.actions-cell { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.actions-cell select { padding: 0.4rem 0.6rem; border: 1px solid rgba(20,42,67,0.2); border-radius: 8px; font: inherit; background: #fff; }

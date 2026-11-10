@@ -15,6 +15,7 @@ export function Navbar() {
           <li><a href="#contact">{t.nav.contact}</a></li>
           <li><a href="#/freelance">{t.nav.platforms === 'Platforms' ? 'Freelance' : 'الأعمال والحلول'}</a></li>
           <li><a href="#/family">صلة</a></li>
+          <li><a href="#/client">{t.nav.platforms === 'Platforms' ? 'Client Portal' : 'لوحة العميل'}</a></li>
         </ul>
         <div className="nav-actions">
           <a href="#platforms" className="btn primary nav-cta">{t.nav.cta}</a>
@@ -205,7 +206,7 @@ export function LegalPage({ page }) {
 export function Footer() {
   const { t } = useLang();
   const quickHrefs = ['#about', '#expertise', '#/freelance', '#articles', '#contact'];
-  const platformHrefs = ['#/freelance', '#/family', '#/freelance'];
+  const platformHrefs = ['#/freelance', '#/family', '#/freelance', '#/client'];
   const legalKeys = ['privacy', 'terms', 'disclaimer', 'cookies'];
   return (
     <footer className="footer">
@@ -229,6 +230,7 @@ export function Footer() {
             {t.footer.platformsLinks.map((p, i) => (
               <li key={p}><a href={platformHrefs[i]}>{p}</a></li>
             ))}
+            <li><a href="#/client">{t.nav.platforms === 'Platforms' ? 'Client Portal' : 'لوحة العميل'}</a></li>
           </ul>
         </div>
         <div>
