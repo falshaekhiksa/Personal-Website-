@@ -7,9 +7,17 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "node server/index.js",
+    "start": "node server/index.js",
+    "test": "NODE_ENV=test node test/api.test.js"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "dependencies": {
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
