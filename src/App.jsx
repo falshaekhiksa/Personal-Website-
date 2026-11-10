@@ -1,5 +1,5 @@
 import { LangProvider } from './i18n'
-import { Navbar, Hero, About, Skills, Experience, Contact, Footer } from './components.jsx'
+import { Navbar, Hero, About, Skills, Projects, Experience, Contact, Footer } from './components.jsx'
 
 export default function App() {
   return (
@@ -8,6 +8,7 @@ export default function App() {
       <Hero />
       <About />
       <Skills />
+      <Projects />
       <Experience />
       <Contact />
       <Footer />
